@@ -3,14 +3,13 @@
 package main
 
 import (
+	"encoding/json"
 	"html/template"
 	"log"
 	"net/http"
 	"os"
 	"regexp"
-	"strconv"
-	"sync"
-	"encoding/json"
+	"strings"
 )
 
 type Page struct {
@@ -18,14 +17,13 @@ type Page struct {
 	Body  []byte
 }
 
-
 func (p *Page) save() error {
-	filename := p.Title + ".txt"
+	filename := "sites/" + p.Title + ".txt"
 	return os.WriteFile(filename, p.Body, 0600)
 }
 
 func loadPage(title string) (*Page, error) {
-	filename := title + ".txt"
+	filename := "sites/" + title + ".txt"
 	body, err := os.ReadFile(filename)
 	if err != nil {
 		return nil, err
@@ -83,10 +81,53 @@ func makeHandler(fn func(http.ResponseWriter, *http.Request, string)) http.Handl
 	}
 }
 
+func homeHandler(w http.ResponseWriter, r *http.Request) {
+	tmpl, err := template.ParseFiles("template/index.html")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	files, err := os.ReadDir("./sites/")
+	if err != nil {
+		log.Fatal(err)
+	}
+	var fileNames []string
+	for _, file := range files {
+		pageName := strings.TrimSuffix(file.Name(), ".txt")
+		fileNames = append(fileNames, pageName)
+	}
+
+	tmpl.Execute(w, fileNames)
+}
+
+func searchHandler(w http.ResponseWriter, r *http.Request) {
+	query := strings.ToLower(r.URL.Query().Get("q"))
+
+	files, err := os.ReadDir("./sites/")
+	if err != nil {
+		http.Error(w, "Error reading files", http.StatusInternalServerError)
+		return
+	}
+
+	var results []string
+	for _, file := range files {
+		pageName := strings.TrimSuffix(file.Name(), ".txt")
+		// Search if query matches the page name
+		if strings.Contains(strings.ToLower(pageName), query) {
+			results = append(results, pageName)
+		}
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(results)
+}
+
 func main() {
+	http.HandleFunc("/", homeHandler)
 	http.HandleFunc("/view/", makeHandler(viewHandler))
 	http.HandleFunc("/edit/", makeHandler(editHandler))
 	http.HandleFunc("/save/", makeHandler(saveHandler))
+	http.HandleFunc("/search", searchHandler)
 
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }

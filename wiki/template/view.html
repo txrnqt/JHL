@@ -1,5 +1,114 @@
-<h1>{{.Title}}</h1>
+<!doctype html>
 
-<p>[<a href="/edit/{{.Title}}">edit</a>]</p>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>{{.Title}} - JWiki</title>
 
-<div>{{printf "%s" .Body}}</div>
+        <style>
+            * {
+                box-sizing: border-box;
+            }
+
+            body {
+                margin: 0;
+                font-family: Arial, sans-serif;
+            }
+
+            .headder {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                padding: 15px 20px;
+                border-bottom: 1px solid #ddd;
+            }
+
+            .search {
+                margin-left: auto;
+                display: flex;
+                gap: 8px;
+                width: 40%;
+            }
+
+            .search input {
+                flex: 1;
+                padding: 8px;
+            }
+
+            .container {
+                width: 100%;
+                padding: 20px;
+                max-width: 900px;
+                margin: 0 auto;
+            }
+
+            .page-title {
+                margin-bottom: 10px;
+            }
+
+            .edit-link {
+                margin-bottom: 20px;
+                display: block;
+            }
+
+            .content {
+                line-height: 1.6;
+            }
+
+            @media (max-width: 900px) {
+                .search {
+                    width: 100%;
+                }
+            }
+
+            a {
+                color: black;
+                text-decoration: none;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+            }
+
+            a h1 {
+                margin: 0;
+                padding: 0;
+                font-size: 2em;
+            }
+
+            a p {
+                margin: 0;
+                padding: 0;
+                font-size: 1em;
+            }
+        </style>
+    </head>
+
+    <body>
+        <div class="headder">
+            <a href="/">
+                <h1>JWiki</h1>
+                <p>A guy's wiki</p>
+            </a>
+            <div class="search">
+                <input type="search" placeholder="Search the site..." />
+                <button>Search</button>
+            </div>
+        </div>
+
+        <div class="container">
+            <h1 class="page-title">{{.Title}}</h1>
+
+            <a class="edit-link" href="/edit/{{.Title}}">Edit</a>
+
+            <div class="content" id="content">{{printf "%s" .Body}}</div>
+        </div>
+
+        <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+        <script>
+            const rawMarkdown = document.getElementById("content").innerText;
+            document.getElementById("content").innerHTML =
+                marked.parse(rawMarkdown);
+        </script>
+    </body>
+</html>
